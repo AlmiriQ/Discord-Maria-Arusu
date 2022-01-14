@@ -1,1 +1,1 @@
-# Discord-Maria-Arusu
+# Discord Maria Arusu
