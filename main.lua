@@ -1,6 +1,7 @@
 local discordia = require"discordia"
 local BotBuilder = require"functional/bot builder"(discordia, require"functional/logger")
 local recursive_scan = require"functional/rscan"(require"fs")
+local Emitter = require('core').Emitter
 
 
 local Maria_Arusu_builder = BotBuilder()
@@ -16,19 +17,32 @@ function Maria_Arusu_builder.messageCreate(message)
    if message.author.id == Maria_Arusu.client.user.id then return end
    local message_text = message.content:lower()
    if message_text:gsub("Н", "н"):gsub("Я", "я") == "ня" or message_text == "nya" then
-      message.channel:send({
-         content = "Nya",
-         file = "sound/Maria_nyaa.mp3"
-      })
-   elseif message.content == "AEsir" then
-      message.channel:send({
-         file = "sound/Chaos.mp3"
-      })
+      if Maria_Arusu.connection == nil then
+         if message.member and message.member.voiceChannel:join() then
+            Maria_Arusu.connection = message.member.voiceChannel:join()
+         end
+      end
+      coroutine.wrap(function()
+         if Maria_Arusu.connection then
+            Maria_Arusu.connection:playFFmpeg('sound/Maria_Meow_' .. tostring(math.random(1, 8)) .. '.opus')
+         end
+      end)()
+      message:addReaction"🐱"
+      message.channel:send("Nya, " .. message.author.mentionString .. " <3"):addReaction"🐱"
+   elseif message.content == "AEsir" or message.content == "Æsir" then
+      coroutine.wrap(function()
+         if Maria_Arusu.connection then
+            Maria_Arusu.connection:playFFmpeg('sound/Chaos.mp3')
+         end
+      end)()
    end
+   local prefixes = { "a:", "A:", "ARS::" }
 end
 
 
 Maria_Arusu = Maria_Arusu_builder:build()
+Maria_Arusu.connection = nil
+Maria_Arusu.musicPlayer = Emitter:new()
 
 
 Maria_Arusu.commands = {}
