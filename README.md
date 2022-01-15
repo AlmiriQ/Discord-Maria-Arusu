@@ -4,4 +4,4 @@ This is Maria Arusu project, discord bot, that is written in Lua (Luvit) by Hikk
 
 ![maria-arusu](https://raw.githubusercontent.com/AlmiriQ/Discord-Maria-Arusu/main/MariaArusu.webp)
 
-Join Hikka&Programmer: discord.gg/Gczp7G6u9W 
+Join Hikka&Programmer: https://www.discord.gg/Gczp7G6u9W 
