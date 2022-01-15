@@ -1,6 +1,9 @@
 # Token file
 token
 
+# Database files
+*.db
+
 # Compiled Lua sources
 luac.out
 
