@@ -1,4 +1,5 @@
 require"functional/functional"
+local Terminal = require"functional/terminal"
 local discordia = require"discordia"
 local BotBuilder = require"functional/bot builder"(discordia, require"functional/logger")
 local recursive_scan = require"functional/rscan"(require"fs")
@@ -17,71 +18,29 @@ end
 
 function Maria_Arusu_builder.messageCreate(message)
    if message.author.id == Maria_Arusu.client.user.id then return end
-   local message_text = message.content:lower()
-   if message_text:gsub("Н", "н"):gsub("Я", "я") == "ня" or message_text == "nya" then
-      Maria_Arusu.musicPlayer:emit("nya", message)
-      return
-   elseif message.content == "AEsir" or message.content == "Æsir" then
-      Maria_Arusu.musicPlayer:emit("aesir", message)
-      return
-   end
-   if message.content:startswith(Maria_Arusu.prefix) then
-      print(pcall(function()
-         local command = Maria_Arusu.cache:get(message.content)
-         if not command then
-            Maria_Arusu.cache:push(message.content, require("ARS"..message.content))
-            command = Maria_Arusu.cache:get(message.content)
-         end
-         command(Maria_Arusu, message)
-      end))
-   end
+   local content = message.content
+   local author = message.author
+   if (content:startswith(Maria_Arusu.prefix) == content:startswith('"' .. Maria_Arusu.prefix)) then return end
+   print(content)
+   print(Terminal.execute(
+      Terminal.split(content), -- command 
+      { -- user
+         name = author.tag,
+         id = author.id,
+         level = Maria_Arusu.get_user_level(author), 
+         ref = author
+      }, 
+      { -- env
+         Maria = Maria_Arusu,
+         message = message
+      }
+   ))
 end
 
 
 Maria_Arusu = Maria_Arusu_builder:build()
 Maria_Arusu.connection = nil
 Maria_Arusu.user_db = sql.open("database/users.db")
-Maria_Arusu.cache = {
-   keys = {},
-   data = {},
-   maxv = 10,
-   push = function(cache, key, data)
-      cache:collect()
-      if cache.keys[key] then return end
-      cache.keys[key] = {
-         usages = 0,
-         cdata = data
-      }
-      table.insert(cache.data, cache.keys[key])
-   end,
-   get = function(cache, key)
-      local re_value = cache.keys[key]
-      if re_value then
-         re_value.usages = re_value.usages + 1
-         return re_value.cdata
-      end
-   end,
-   clear = function(cache)
-      cache.data = {}
-      cache.keys = {}
-      collectgarbage"collect"
-   end,
-   collect = function(cache)
-      if #cache.data < cache.maxv then return end
-      local c_data = {}
-      local sum_usages = 0
-      for _, dt in ipairs(cache.data) do sum_usages = sum_usages + dt.usages end
-      for k, dt in ipairs(cache.keys) do
-         if dt.usages / sum_usages > (1 / cache.maxv / 1.5) then
-            c_data[k] = dt
-         end
-      end
-      cache:clear()
-      for k, v in pairs(c_data) do
-         cache:push(k, v)
-      end
-   end
-}
 Maria_Arusu.user_db:exec[[
 CREATE TABLE IF NOT EXISTS user(id INTEGER PRIMARY KEY, level UNSIGNED TINYINT);
 INSERT OR IGNORE INTO user VALUES
@@ -94,13 +53,12 @@ Maria_Arusu.prefix = "/"
 Maria_Arusu.bitwise = require"bitwise"
 
 function Maria_Arusu.musicPlayer.connect(message)
-   if message.member and message.member.voiceChannel then
-      if Maria_Arusu.connection == nil then
-         Maria_Arusu.connection = message.member.voiceChannel:join()
-      elseif Maria_Arusu.connection.channel.id ~= message.member.voiceChannel.id then
-         Maria_Arusu.connection:close()
-         Maria_Arusu.connection = message.member.voiceChannel:join()
-      end
+   if not (message.member and message.member.voiceChannel) then return end
+   if Maria_Arusu.connection == nil then
+      Maria_Arusu.connection = message.member.voiceChannel:join()
+   elseif Maria_Arusu.connection.channel.id ~= message.member.voiceChannel.id then
+      Maria_Arusu.connection:close()
+      Maria_Arusu.connection = message.member.voiceChannel:join()
    end
 end
 
@@ -119,6 +77,38 @@ Maria_Arusu.musicPlayer:on("aesir", function(message)
       Maria_Arusu.connection:playFFmpeg('sound/Chaos.mp3')
    end))
 end)
+
+function Maria_Arusu.get_default_level(user)
+   if user.bot then return 1 end
+   return 2
+end
+
+function Maria_Arusu.get_user_level(user)
+   return Maria_Arusu.user_db:exec(
+      (([[
+         INSERT OR IGNORE INTO user VALUES(%s, %s);
+         SELECT level FROM user WHERE id == %s;
+      ]])):format(user.id, Maria_Arusu.get_default_level(user), user.id)
+   )[1][1]
+end
+
+function Maria_Arusu.level_to_string(n)
+   n = tonumber(n)
+   if     n >= 128 then return "Maria"
+   elseif n >= 64  then return "God"
+   elseif n >= 32  then return "Overprotected"
+   elseif n >= 16  then return "Protection"
+   elseif n >= 8   then return "Admin"
+   elseif n >= 4   then return "System"
+   elseif n >= 2   then return "User"
+   elseif n >= 1   then return "Application"
+   else                 return "File"
+   end
+end
+
+function Maria_Arusu.ltsgul(user) -- combination of level_to_string & get_user_level
+   return Maria_Arusu.level_to_string(Maria_Arusu.get_user_level(user))
+end
 
 Maria_Arusu.commands = {}
 for _, file in pairs(recursive_scan"ARS") do

@@ -19,10 +19,6 @@ function string.endswith(str, ending)
    return ending == "" or str:sub(-#ending) == ending
 end
 
-function table.add(t1, t2)
-   return {table.unpack(t1), table.unpack(t2)}
-end
-
 function table.find(table, lf)
    for _, v in ipairs(table) do
       if lf(v) then return v end

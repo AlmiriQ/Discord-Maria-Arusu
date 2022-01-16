@@ -4,7 +4,8 @@ return function(discordia, logger)
          build = function(this)
             local bot = { client = discordia.Client{
                logLevel = discordia.enums.logLevel.warning,
-               logFile = "/dev/null"
+               logFile = "/dev/null",
+               gatewayFile = "/dev/null"
             }, logger = logger }
             bot.client:on("ready", this.ready or function() bot.logger:log("success", "Logged in as " .. bot.user.username .. "!") end)
             
