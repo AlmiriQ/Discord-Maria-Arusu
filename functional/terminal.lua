@@ -1,4 +1,4 @@
-return function(fs)
+return function(fs, path)
    Terminal = {
       path = {
          "",
@@ -23,22 +23,27 @@ return function(fs)
       return data
    end
 
+   function Terminal.get_file(command)
+      local file = nil
+      for _, path_var in ipairs(Terminal.path) do
+         if fs.existsSync("ARS" .. path_var .. command .. ".lua") or
+         fs.existsSync("ARS" .. path_var .. command .. ".luac") or
+         fs.existsSync("ARS" .. path_var .. command .. ".so")
+         then
+            file = "ARS" .. path_var .. command
+         end
+      end
+      local error = file == nil
+      return error, path.normalize(file)
+   end
+
    function Terminal.execute(command, user, env)
       local cmd = Terminal.cache:get(command[1])
       if not cmd then
          -- here we are going to check if file exists
-         local file = nil
-         for _, path_var in ipairs(Terminal.path) do
-            if fs.existsSync("ARS" .. path_var .. command[1] .. ".lua") or
-            fs.existsSync("ARS" .. path_var .. command[1] .. ".luac") or
-            fs.existsSync("ARS" .. path_var .. command[1] .. ".so")
-            then
-               file = "ARS" .. path_var .. command[1]
-            end
-         end
-         if not file then
-            return "File not found: " .. command[1]
-         end
+         local error, file = Terminal.get_file(command[1])
+         if error then return "File not found: " .. command[1] end
+         if not file:startswith"ARS/" then return "Attempt to index invalid filename: " .. command[1] end
          local res, err = pcall(require, file)
          if not res then return err else res = err end
          Terminal.cache:push(command[1], res)
