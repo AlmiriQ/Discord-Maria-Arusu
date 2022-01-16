@@ -8,7 +8,7 @@ Join Hikka&Programmer: https://www.discord.gg/Gczp7G6u9W
 
 Project structure:
 - ARS - all Maria Arusu data (e. g. commands)
-- Systemα/Systema - all constant data (pictures, sounds, token)
+- Systemα/Systema - all constant data (pictures, sounds, token) (it was not uploaded fully, because it contains files that don't belong to me)
 - functional - all additional code files
 - main.lua - main code file
 
