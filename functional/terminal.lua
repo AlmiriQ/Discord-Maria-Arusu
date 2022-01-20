@@ -33,16 +33,15 @@ return function(fs, path)
             file = "ARS" .. path_var .. command
          end
       end
-      local error = file == nil
-      return error, path.normalize(file)
+      return path.normalize(file)
    end
 
    function Terminal.execute(command, user, env)
       local cmd = Terminal.cache:get(command[1])
       if not cmd then
          -- here we are going to check if file exists
-         local error, file = Terminal.get_file(command[1])
-         if error then return "File not found: " .. command[1] end
+         local nerror, file = pcall(Terminal.get_file, command[1])
+         if not nerror then return "File not found: " .. command[1] end
          if not file:startswith"ARS/" then return "Attempt to index invalid filename: " .. command[1] end
          local res, err = pcall(require, file)
          if not res then return err else res = err end
