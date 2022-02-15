@@ -1,4 +1,4 @@
-# Discord Maria Arusu
+# Discord Maria Arusu (этот проект надо переписать на другой язык или всё-таки продумать многопоточность)
 
 This is Maria Arusu project, discord bot, that is written in Lua (Luvit) by Hikka&Programmer
 
